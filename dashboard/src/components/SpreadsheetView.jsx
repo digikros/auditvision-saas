@@ -84,9 +84,9 @@ const SpreadsheetView = ({ invoices }) => {
       {/* Spreadsheet Toolbar */}
       <div className="p-4 border-b border-gray-50 flex flex-col gap-4 bg-gray-50/30 rounded-t-2xl">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
-          <div className="flex flex-col md:flex-row items-center gap-3 w-full lg:w-auto flex-1">
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto flex-1">
             {/* Unified Search */}
-            <div className="relative flex-1 md:max-w-md w-full">
+            <div className="relative flex-1 w-full lg:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input 
                 type="text" 
@@ -98,7 +98,7 @@ const SpreadsheetView = ({ invoices }) => {
             </div>
 
             {/* Range Date Picker */}
-            <div className="relative w-full md:w-64">
+            <div className="relative w-full sm:w-64">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
               <DatePicker
                 selectsRange={true}
@@ -114,7 +114,7 @@ const SpreadsheetView = ({ invoices }) => {
             </div>
           </div>
           
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center justify-between lg:justify-end gap-3 w-full lg:w-auto shrink-0 border-t border-gray-50 lg:border-none pt-3 lg:pt-0">
              <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">
                {filteredData.length} registros
              </span>
@@ -123,7 +123,7 @@ const SpreadsheetView = ({ invoices }) => {
                className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-800 transition-all shadow-md shadow-gray-200"
              >
                <Download size={16} />
-               Exportar Excel
+               Exportar
              </button>
           </div>
         </div>

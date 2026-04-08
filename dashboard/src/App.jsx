@@ -6,7 +6,7 @@ import SpreadsheetView from './components/SpreadsheetView';
 import Auth from './components/Auth';
 import UploadForm from './components/UploadForm';
 import { supabase } from './lib/supabaseClient';
-import { Search } from 'lucide-react';
+import { Search, Menu, X } from 'lucide-react';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -15,6 +15,7 @@ function App() {
   const [invoices, setInvoices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Auth State Listener ...
   useEffect(() => {
@@ -90,25 +91,39 @@ function App() {
     <div className="flex bg-gray-50 min-h-screen font-sans overflow-hidden">
       <Sidebar 
         activeView={activeView} 
-        setActiveView={setActiveView} 
+        setActiveView={(view) => {
+          setActiveView(view);
+          setIsSidebarOpen(false); // Fechar ao selecionar no mobile
+        }} 
         onLogout={handleLogout}
         userEmail={session.user.email}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Top Header Barra */}
-        <header className="px-8 py-5 border-b border-gray-100 bg-white flex items-center justify-between shrink-0">
-          <h2 className="text-xl font-bold text-gray-900 capitalize leading-none">
-            {activeView === 'upload' ? 'Ler Factura' : activeView}
-          </h2>
+        {/* Top Header Barra - Glassmorphism for premium feel */}
+        <header className="px-5 md:px-8 py-4 border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-30 flex items-center justify-between shrink-0 gap-4 shadow-sm">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 -ml-2 text-gray-400 hover:text-gray-900 md:hidden bg-gray-50 rounded-lg transition-colors border border-gray-100 active:scale-95"
+              aria-label="Abrir menu"
+            >
+              <Menu size={22} />
+            </button>
+            <h2 className="text-lg md:text-xl font-bold text-gray-900 tracking-tight capitalize">
+              {activeView === 'upload' ? 'Ler Factura' : activeView}
+            </h2>
+          </div>
           
           {activeView === 'dashboard' && (
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <div className="relative w-64 md:w-80 group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-indigo-500 transition-colors" />
               <input 
                 type="text" 
                 placeholder="Procurar facturas..."
-                className="w-full pl-9 pr-4 py-1.5 border border-gray-100 bg-gray-50 rounded-lg text-sm focus:ring-1 focus:ring-gray-900 outline-none transition-all"
+                className="w-full pl-9 pr-4 py-2 border border-gray-100 bg-gray-50/50 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 focus:bg-white outline-none transition-all shadow-inner"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />

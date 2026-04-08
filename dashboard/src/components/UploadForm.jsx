@@ -49,23 +49,43 @@ const UploadForm = ({ userId, onUploadSuccess }) => {
         body: formData
       });
 
+      // Se a resposta não for OK (200), lemos como texto para o erro
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Erro no servidor (${response.status}): ${errorText.substring(0, 100)}`);
+      }
+
       const data = await response.json();
       setProgress(100);
 
-      if (response.ok) {
-        setMessage({ type: 'success', text: 'Factura(s) processada(s) com sucesso!' });
+      if (data.success) {
+        setMessage({ 
+          type: 'success', 
+          text: data.message,
+          details: data.avisos 
+        });
         setFiles([]);
         setTimeout(() => {
           setIsUploading(false);
           setProgress(0);
           setMessage(null);
           if (onUploadSuccess) onUploadSuccess();
-        }, 800);
+        }, data.avisos?.length > 0 ? 5000 : 800);
       } else {
-        throw new Error(data.error || 'Erro no upload');
+        setMessage({ 
+          type: 'error', 
+          text: data.message || 'Falha no processamento.',
+          details: data.avisos
+        });
+        setIsUploading(false);
       }
     } catch (err) {
-      setMessage({ type: 'error', text: err.message });
+      // Aqui apanhamos tanto erros de rede como o erro lançado se !response.ok
+      // Previne o erro "Unexpected end of JSON input" ao tentar ler JSON de um erro 500
+      setMessage({ 
+        type: 'error', 
+        text: err.name === 'SyntaxError' ? 'Resposta do servidor inválida (JSON esperado).' : err.message 
+      });
       setIsUploading(false);
     }
   };
@@ -146,11 +166,24 @@ const UploadForm = ({ userId, onUploadSuccess }) => {
       )}
 
       {message && (
-        <div className={`mt-6 p-4 rounded-xl flex items-start gap-3 border ${
+        <div className={`mt-6 p-4 rounded-xl flex flex-col gap-3 border ${
           message.type === 'success' ? 'bg-green-50 border-green-100 text-green-700' : 'bg-red-50 border-red-100 text-red-700'
         }`}>
-          {message.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
-          <p className="text-sm font-medium">{message.text}</p>
+          <div className="flex items-start gap-3">
+            {message.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
+            <p className="text-sm font-medium">{message.text}</p>
+          </div>
+          
+          {message.details && message.details.length > 0 && (
+            <ul className="mt-2 space-y-1 border-t border-current/10 pt-2">
+              {message.details.map((detail, idx) => (
+                <li key={idx} className="text-xs flex items-center gap-2">
+                  <span className="w-1 h-1 bg-current rounded-full shrink-0" />
+                  {detail}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </div>

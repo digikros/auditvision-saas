@@ -26,9 +26,8 @@ from dotenv import load_dotenv
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 TMP_DIR = BASE_DIR / ".tmp" / "uploads"
 # Em produção o Flask servirá o Dashboard construído (Vite build)
 FRONTEND_DIR = BASE_DIR / "dashboard" / "dist"
@@ -167,9 +166,13 @@ def upload_invoices():
     successful_results = [
         r for r in results if r.get("fornecedor") != "Erro no processamento"
     ]
+    
     if successful_results:
         logger.info(f"🗄️ A iniciar sincronização síncrona para {len(successful_results)} resultado(s)...")
         process_post_extraction_sync(successful_results, user_id)
+    elif results:
+        # Se houve tentativas mas nenhum sucesso, o status geral deve ser erro ou aviso forte
+        logger.warning("⚠️ Nenhum resultado válido para sincronizar.")
 
     # ------ Step 4: Cleanup temp files ------
     for file_path, _ in saved_paths:
@@ -180,10 +183,17 @@ def upload_invoices():
             pass
 
     # ------ Response ------
+    is_fully_successful = len(successful_results) == len(results) and len(results) > 0
+    has_any_success = len(successful_results) > 0
+
     response = {
-        "success": True,
+        "success": has_any_success,
         "message": (
             "Factura(s) processada(s) e sincronizada(s) com sucesso!"
+            if is_fully_successful
+            else "Processamento concluído com alguns avisos."
+            if has_any_success
+            else "Falha no processamento das facturas."
         ),
         "total_processados": len(results),
         "resultados": results,
@@ -197,6 +207,21 @@ def upload_invoices():
         f"{len(errors)} aviso(s)"
     )
     return jsonify(response), 200
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Handle uncaught exceptions and return JSON."""
+    code = 500
+    if hasattr(e, "code"):
+        code = e.code
+    
+    logger.error(f"⚠️ Erro não tratado: {str(e)}")
+    return jsonify({
+        "success": False,
+        "message": f"Erro interno no servidor: {str(e)}",
+        "error": type(e).__name__
+    }), code
 
 
 # ---------------------------------------------------------------------------
